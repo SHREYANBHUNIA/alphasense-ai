@@ -43,11 +43,13 @@ describe("finance workspace accessibility safeguards", () => {
     expect(layout).toContain("SidebarMenuButton");
   });
 
-  it("discloses unavailable fund-profile fields instead of estimating expense ratio or sector allocation", () => {
+  it("renders only provider-reported fund-profile fields and the calculated fund-return and risk metrics", () => {
     const research = readProjectFile("client/src/pages/Research.tsx");
     expect(research).toContain("Expense ratio");
     expect(research).toContain("Sector allocation");
-    expect(research).toContain("Not supplied by selected live source");
+    expect(research).toContain("annualExpenseRatioPercent");
+    expect(research).toContain("sectorAllocation");
+    expect(research).toContain("Profile source");
     expect(research).toContain("Rolling returns");
     expect(research).toContain("Annualized return");
     expect(research).toContain("Sharpe");

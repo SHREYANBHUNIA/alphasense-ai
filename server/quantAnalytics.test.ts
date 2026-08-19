@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { calculateFundamentalScore, calculatePortfolioVolatilityScore, calculateRiskMetrics, calculateTechnicalIndicators, deriveScreenerMetrics } from "./quantAnalytics";
+import { calculateFundamentalScore, calculatePortfolioVolatilityScore, calculateRiskMetrics, calculateRollingReturns, calculateTechnicalIndicators, deriveScreenerMetrics } from "./quantAnalytics";
 
 describe("quant analytics", () => {
   const candles = [100, 105, 95, 110, 100].map((close, index) => ({ timestamp: (index + 1) * 86_400_000, date: new Date((index + 1) * 86_400_000).toISOString(), open: close, high: close, low: close, close, volume: 100 }));
@@ -33,6 +33,17 @@ describe("quant analytics", () => {
     expect(indicators).toMatchObject({ latestClose: 199, simpleMovingAverage20: 189.5, simpleMovingAverage50: 174.5, observationCount: 100 });
     expect(indicators.returns.ninetyDayPercent).toBeCloseTo(82.5688, 3);
     expect(calculatePortfolioVolatilityScore([{ currentValue: 800, annualizedVolatilityPercent: 20 }, { currentValue: 200, annualizedVolatilityPercent: 40 }])).toMatchObject({ riskScore: 24, annualizedVolatilityPercent: 24, coveragePercent: 100 });
+  });
+
+  it("calculates trailing fund returns from the supplied close series", () => {
+    const historicalCandles = Array.from({ length: 100 }, (_, index) => {
+      const close = 100 + index;
+      return { timestamp: (index + 1) * 86_400_000, date: new Date((index + 1) * 86_400_000).toISOString(), open: close, high: close, low: close, close, volume: 100 };
+    });
+    const returns = calculateRollingReturns(historicalCandles);
+    expect(returns.thirtyDayPercent).toBeCloseTo(((199 / 169) - 1) * 100);
+    expect(returns.ninetyDayPercent).toBeCloseTo(((199 / 109) - 1) * 100);
+    expect(returns.oneYearPercent).toBeCloseTo(99);
   });
 
   it("derives valuation metrics only when required provider-reported inputs are available", () => {

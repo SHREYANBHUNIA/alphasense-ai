@@ -12,12 +12,12 @@
 - [x] Implement a stock prediction dashboard with selectable 1d, 7d, 30d, and 90d forecast charts plus return, risk, probability-of-gain, and confidence measures.
 - [x] Implement a stock screener with P/E, ROE, dividend yield, market cap, revenue growth, debt, promoter-holding availability, and AI-score filters.
 - [x] Implement a news intelligence feed that groups financial news, summarizes it, assigns only Positive, Negative, or Neutral sentiment, and presents market-impact context.
-- [ ] Implement a mutual-fund explorer with real fund data and comparisons for expense ratio, rolling returns, sector allocation, and Sharpe, Sortino, Alpha, Beta, and Max Drawdown metrics.
+- [x] Implement a mutual-fund explorer with real fund data and comparisons for expense ratio, rolling returns, sector allocation, and Sharpe, Sortino, Alpha, Beta, and Max Drawdown metrics.
 - [x] Replace the mutual-fund explorer’s non-returning default ticker with a provider-verified fund-history symbol and revalidate real price/risk calculations.
 - [x] Apply the white-grid mathematical-blueprint visual system: oversized black typography, monospaced labels, technical formula motifs, and pastel cyan/pink wireframes.
 - [x] Add responsive navigation, accessible states, data-source attribution, and a prominent research-only / not-investment-advice notice.
 - [x] Add and run Vitest coverage for calculations, sentiment validation, fundamental-score inputs, and server-side data/LLM contracts.
-- [ ] Verify desktop and mobile interface screenshots, resolve console/build errors, and complete all pending TODO items before the project checkpoint.
+- [ ] Complete and record final desktop/mobile visual verification plus current diagnostics, then save a final checkpoint containing that evidence.
 - [x] Resolve the browser console’s React list-key warning in the command-center rendering path and revalidate diagnostics.
 - [x] Prevent screener live rows with a missing provider currency from passing an invalid currency code to number formatting, then revalidate the route.
 - [x] Implement provider-backed dividend and stock-split retrieval with source, retrieval timestamp, and typed server procedure coverage.
@@ -35,3 +35,7 @@
 - [x] Implement the current MVP mutual-fund explorer with live price/history, calculated rolling returns and risk metrics, and explicit unavailable-field disclosures for provider-missing expense ratio and sector allocation.
 - [x] Align the live-source verification script’s mutual-fund symbol with the VFIAX default used by the explorer.
 - [x] Run final live-source checks for quotes, history, fundamentals, corporate actions, news, earnings, and VFIAX fund history; run all automated tests and TypeScript checks.
+- [x] Verify the correct registered Fund Explorer route after the final profile integration and resolve any route mismatch found in visual review.
+- [x] Verify VFIAX fund-profile retrieval through the typed endpoint: 0.04% expense ratio, 11 provider-reported sector weights, 251 price observations, and calculated rolling returns.
+- [x] Reconfirm and record a concise timestamp-scoped desktop/mobile validation and current console/network diagnostic summary against the post-fund-profile build.
+- [ ] Save a final checkpoint containing the completed fund-profile integration and current validation evidence.

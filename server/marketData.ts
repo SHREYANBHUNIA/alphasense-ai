@@ -28,6 +28,22 @@ export type Candle = {
   volume: number | null;
 };
 
+export type FundSectorAllocation = {
+  sector: string;
+  weightPercent: number;
+};
+
+export type FundProfile = {
+  symbol: string;
+  annualExpenseRatioPercent: number | null;
+  netExpenseRatioPercent: number | null;
+  sectorAllocation: FundSectorAllocation[];
+  source: "Yahoo Finance";
+  asOf: string;
+  dataStatus: "live" | "partial";
+  note: string | null;
+};
+
 export type ChartSeries = {
   symbol: string;
   timeframe: ChartTimeframe;
@@ -94,9 +110,18 @@ const YAHOO_HEADERS = {
   Accept: "application/json",
   "User-Agent": "AlphaSenseAIResearch/1.0",
 };
+const YAHOO_PROFILE_HEADERS = {
+  "User-Agent": "Mozilla/5.0 AlphaSenseAIResearch/1.0",
+};
+let yahooProfileSession: { cookie: string; crumb: string; expiresAt: number } | null = null;
 
 function toNumber(value: unknown): number | null {
-  return typeof value === "number" && Number.isFinite(value) ? value : null;
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && value.trim() !== "") {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
 }
 
 function normalizeSymbol(symbol: string) {
@@ -120,6 +145,39 @@ async function fetchJson<T>(url: string): Promise<T> {
   const response = await fetch(url, { headers: YAHOO_HEADERS });
   if (!response.ok) {
     throw new Error(`Live market-data provider returned ${response.status}. Please try again shortly.`);
+  }
+  return (await response.json()) as T;
+}
+
+function collectCookies(headers: Headers) {
+  const setCookies = typeof (headers as Headers & { getSetCookie?: () => string[] }).getSetCookie === "function"
+    ? (headers as Headers & { getSetCookie: () => string[] }).getSetCookie()
+    : [];
+  return setCookies.map(value => value.split(";", 1)[0]).filter((value): value is string => Boolean(value)).join("; ");
+}
+
+async function getYahooProfileSession() {
+  if (yahooProfileSession && yahooProfileSession.expiresAt > Date.now()) return yahooProfileSession;
+  const seed = await fetch("https://fc.yahoo.com/", { headers: YAHOO_PROFILE_HEADERS, redirect: "follow" });
+  const seedCookie = collectCookies(seed.headers);
+  if (!seedCookie) throw new Error("Yahoo Finance profile session is unavailable.");
+  const crumbResponse = await fetch("https://query1.finance.yahoo.com/v1/test/getcrumb", {
+    headers: { ...YAHOO_PROFILE_HEADERS, Cookie: seedCookie },
+  });
+  if (!crumbResponse.ok) throw new Error(`Yahoo Finance profile session returned ${crumbResponse.status}.`);
+  const crumb = (await crumbResponse.text()).trim();
+  if (!crumb) throw new Error("Yahoo Finance profile session returned no crumb.");
+  yahooProfileSession = { cookie: seedCookie, crumb, expiresAt: Date.now() + 5 * 60_000 };
+  return yahooProfileSession;
+}
+
+async function fetchYahooFundProfileJson<T>(symbol: string): Promise<T> {
+  const session = await getYahooProfileSession();
+  const url = `https://query1.finance.yahoo.com/v10/finance/quoteSummary/${encodeURIComponent(symbol)}?modules=fundProfile,topHoldings&crumb=${encodeURIComponent(session.crumb)}`;
+  const response = await fetch(url, { headers: { ...YAHOO_PROFILE_HEADERS, Cookie: session.cookie } });
+  if (!response.ok) {
+    yahooProfileSession = null;
+    throw new Error(`Yahoo Finance fund profile returned ${response.status}.`);
   }
   return (await response.json()) as T;
 }
@@ -267,6 +325,33 @@ export function normalizeCorporateActions(raw: any): CorporateAction[] {
   return actions.sort((a, b) => b.timestamp - a.timestamp);
 }
 
+function formatSectorName(value: string) {
+  return value.replace(/_/g, " ").replace(/\b\w/g, character => character.toUpperCase());
+}
+
+export function normalizeFundProfile(raw: any, symbol: string, asOf = new Date().toISOString()): FundProfile {
+  const result = raw?.quoteSummary?.result?.[0] ?? {};
+  const expenses = result?.fundProfile?.feesExpensesInvestment ?? {};
+  const annualExpenseRatio = toNumber(expenses?.annualReportExpenseRatio?.raw) ?? toNumber(expenses?.annualReportExpenseRatio);
+  const netExpenseRatio = toNumber(expenses?.netExpRatio?.raw) ?? toNumber(expenses?.netExpRatio);
+  const rawAllocation: any[] = Array.isArray(result?.topHoldings?.sectorWeightings) ? result.topHoldings.sectorWeightings : [];
+  const sectorAllocation = rawAllocation.flatMap(entry => Object.entries(entry ?? {}).flatMap(([sector, value]) => {
+    const weight = toNumber((value as any)?.raw) ?? toNumber(value);
+    return weight === null ? [] : [{ sector: formatSectorName(sector), weightPercent: weight * 100 }];
+  }));
+  const isLive = annualExpenseRatio !== null || netExpenseRatio !== null || sectorAllocation.length > 0;
+  return {
+    symbol,
+    annualExpenseRatioPercent: annualExpenseRatio === null ? null : annualExpenseRatio * 100,
+    netExpenseRatioPercent: netExpenseRatio === null ? null : netExpenseRatio * 100,
+    sectorAllocation,
+    source: "Yahoo Finance",
+    asOf,
+    dataStatus: isLive ? "live" : "partial",
+    note: isLive ? null : "Provider profile fields are unavailable for this fund at this time.",
+  };
+}
+
 export async function getPriceSnapshot(symbolInput: string): Promise<PriceSnapshot> {
   const symbol = normalizeSymbol(symbolInput);
   return cached(`snapshot:${symbol}`, async () => {
@@ -381,11 +466,27 @@ export async function getMarketOverview(symbols: string[] = Array.from(DEFAULT_M
   return { snapshots, asOf: new Date().toISOString() };
 }
 
-export async function getFundData(symbolInput: string, benchmarkInput = "SPY"): Promise<{ snapshot: PriceSnapshot; history: ChartSeries; benchmarkHistory: ChartSeries }> {
-  const [snapshot, history, benchmarkHistory] = await Promise.all([
+export async function getFundProfile(symbolInput: string): Promise<FundProfile> {
+  const symbol = normalizeSymbol(symbolInput);
+  return cached(`fundProfile:${symbol}`, async () => normalizeFundProfile(await fetchYahooFundProfileJson(symbol), symbol));
+}
+
+export async function getFundData(symbolInput: string, benchmarkInput = "SPY"): Promise<{ snapshot: PriceSnapshot; history: ChartSeries; benchmarkHistory: ChartSeries; profile: FundProfile }> {
+  const symbol = normalizeSymbol(symbolInput);
+  const [snapshot, history, benchmarkHistory, profile] = await Promise.all([
     getPriceSnapshot(symbolInput),
     getChartSeries(symbolInput, "1y"),
     getChartSeries(benchmarkInput, "1y"),
+    getFundProfile(symbol).catch(() => ({
+      symbol,
+      annualExpenseRatioPercent: null,
+      netExpenseRatioPercent: null,
+      sectorAllocation: [],
+      source: "Yahoo Finance" as const,
+      asOf: new Date().toISOString(),
+      dataStatus: "partial" as const,
+      note: "Provider profile fields are temporarily unavailable; no substitute values are shown.",
+    })),
   ]);
-  return { snapshot, history, benchmarkHistory };
+  return { snapshot, history, benchmarkHistory, profile };
 }

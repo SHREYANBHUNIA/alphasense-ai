@@ -45,6 +45,13 @@ export type TechnicalIndicators = {
   method: string;
 };
 
+export type RollingReturns = {
+  thirtyDayPercent: number | null;
+  ninetyDayPercent: number | null;
+  oneYearPercent: number | null;
+  method: string;
+};
+
 const TRADING_DAYS = 252;
 
 function stdDev(values: number[]) {
@@ -127,6 +134,22 @@ export function calculateRiskMetrics(assetCandles: Candle[], benchmarkCandles: C
       "Sharpe and Sortino assume a 0% risk-free rate; Alpha uses the supplied benchmark and the same convention.",
       "Metrics are backward-looking research measures and do not predict future returns.",
     ],
+  };
+}
+
+export function calculateRollingReturns(candles: Candle[]): RollingReturns {
+  const prices = closeSeries(candles).map(point => point.close);
+  const latest = prices.at(-1) ?? null;
+  const calculate = (lookback: number) => {
+    if (latest === null || prices.length <= lookback) return null;
+    const prior = prices[prices.length - 1 - lookback];
+    return prior && prior > 0 ? ((latest / prior) - 1) * 100 : null;
+  };
+  return {
+    thirtyDayPercent: calculate(30),
+    ninetyDayPercent: calculate(90),
+    oneYearPercent: calculate(Math.min(TRADING_DAYS, Math.max(0, prices.length - 1))),
+    method: "Trailing returns use provider-adjusted daily closes ending on the latest available observation; the one-year figure uses up to 252 trading intervals available in the retrieved series.",
   };
 }
 

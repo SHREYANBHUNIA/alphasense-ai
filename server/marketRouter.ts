@@ -11,7 +11,7 @@ import {
   getPriceSnapshot,
   searchInstruments,
 } from "./marketData";
-import { calculateFundamentalScore, calculateRiskMetrics, calculateTechnicalIndicators, deriveScreenerMetrics } from "./quantAnalytics";
+import { calculateFundamentalScore, calculateRiskMetrics, calculateRollingReturns, calculateTechnicalIndicators, deriveScreenerMetrics } from "./quantAnalytics";
 import { publicProcedure, router } from "./_core/trpc";
 
 const tickerSchema = z.string().trim().min(1).max(20).regex(/^[A-Za-z0-9.^=-]+$/, "Use a valid market ticker.");
@@ -28,7 +28,7 @@ export const marketRouter = router({
   fund: publicProcedure.input(z.object({ symbol: tickerSchema, benchmark: tickerSchema.default("SPY") })).query(({ input }) => getFundData(input.symbol, input.benchmark)),
   fundAnalytics: publicProcedure.input(z.object({ symbol: tickerSchema, benchmark: tickerSchema.default("SPY") })).query(async ({ input }) => {
     const data = await getFundData(input.symbol, input.benchmark);
-    return { ...data, metrics: calculateRiskMetrics(data.history.candles, data.benchmarkHistory.candles), method: "Provider price series analyzed server-side" };
+    return { ...data, metrics: calculateRiskMetrics(data.history.candles, data.benchmarkHistory.candles), rollingReturns: calculateRollingReturns(data.history.candles), method: "Provider price series and profile fields analyzed server-side" };
   }),
   fundamentalScore: publicProcedure.input(z.object({ symbol: tickerSchema })).query(async ({ input }) => {
     const fundamentals = await getFundamentals(input.symbol);
