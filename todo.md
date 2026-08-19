@@ -41,6 +41,6 @@
 - [x] Save a final checkpoint containing the completed fund-profile integration and current validation evidence.
 - [x] Prepare the completed AlphaSense AI source tree for GitHub export without committing generated secrets, local logs, or runtime artifacts.
 - [x] Create or update a private GitHub repository named alphasense-ai in the connected account and push the finalized project source.
-- [ ] Verify the GitHub repository contents and document practical deployment configuration requirements.
+- [x] Verify the GitHub repository contents and document practical deployment configuration requirements.
 - [x] Re-run export-safety checks after untracking the preview collector to confirm no Manus runtime artifacts, local logs, or project config files are tracked.
 - [x] Run and record a targeted tracked-file secret scan confirming that only environment-variable references—not credential literals—will be exported.
