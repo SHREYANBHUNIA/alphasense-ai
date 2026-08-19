@@ -17,7 +17,7 @@
 - [x] Apply the white-grid mathematical-blueprint visual system: oversized black typography, monospaced labels, technical formula motifs, and pastel cyan/pink wireframes.
 - [x] Add responsive navigation, accessible states, data-source attribution, and a prominent research-only / not-investment-advice notice.
 - [x] Add and run Vitest coverage for calculations, sentiment validation, fundamental-score inputs, and server-side data/LLM contracts.
-- [ ] Complete and record final desktop/mobile visual verification plus current diagnostics, then save a final checkpoint containing that evidence.
+- [x] Complete and record final desktop/mobile visual verification plus current diagnostics, then save a final checkpoint containing that evidence.
 - [x] Resolve the browser console’s React list-key warning in the command-center rendering path and revalidate diagnostics.
 - [x] Prevent screener live rows with a missing provider currency from passing an invalid currency code to number formatting, then revalidate the route.
 - [x] Implement provider-backed dividend and stock-split retrieval with source, retrieval timestamp, and typed server procedure coverage.
@@ -38,4 +38,4 @@
 - [x] Verify the correct registered Fund Explorer route after the final profile integration and resolve any route mismatch found in visual review.
 - [x] Verify VFIAX fund-profile retrieval through the typed endpoint: 0.04% expense ratio, 11 provider-reported sector weights, 251 price observations, and calculated rolling returns.
 - [x] Reconfirm and record a concise timestamp-scoped desktop/mobile validation and current console/network diagnostic summary against the post-fund-profile build.
-- [ ] Save a final checkpoint containing the completed fund-profile integration and current validation evidence.
+- [x] Save a final checkpoint containing the completed fund-profile integration and current validation evidence.
