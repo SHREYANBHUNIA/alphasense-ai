@@ -39,3 +39,6 @@
 - [x] Verify VFIAX fund-profile retrieval through the typed endpoint: 0.04% expense ratio, 11 provider-reported sector weights, 251 price observations, and calculated rolling returns.
 - [x] Reconfirm and record a concise timestamp-scoped desktop/mobile validation and current console/network diagnostic summary against the post-fund-profile build.
 - [x] Save a final checkpoint containing the completed fund-profile integration and current validation evidence.
+- [ ] Prepare the completed AlphaSense AI source tree for GitHub export without committing generated secrets, local logs, or runtime artifacts.
+- [ ] Create or update a private GitHub repository named alphasense-ai in the connected account and push the finalized project source.
+- [ ] Verify the GitHub repository contents and document practical deployment configuration requirements.
