@@ -3,18 +3,29 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
+import DashboardLayout from "./components/DashboardLayout";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
+import Portfolio from "./pages/Portfolio";
+import Research from "./pages/Research";
+import AIAnalyst from "./pages/AIAnalyst";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
   return (
-    <Switch>
-      <Route path={"/"} component={Home} />
-      <Route path={"/404"} component={NotFound} />
-      {/* Final fallback route */}
-      <Route component={NotFound} />
-    </Switch>
+    <DashboardLayout>
+      <Switch>
+        <Route path={"/"} component={Home} />
+        <Route path={"/portfolio"} component={Portfolio} />
+        <Route path={"/prediction"}><Research mode="prediction" /></Route>
+        <Route path={"/ai"} component={AIAnalyst} />
+        <Route path={"/screener"}><Research mode="screener" /></Route>
+        <Route path={"/news"}><Research mode="news" /></Route>
+        <Route path={"/funds"}><Research mode="funds" /></Route>
+        <Route path={"/404"} component={NotFound} />
+        <Route component={NotFound} />
+      </Switch>
+    </DashboardLayout>
   );
 }
 

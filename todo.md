@@ -1,0 +1,37 @@
+# Project TODO
+
+- [x] Establish a documented data-source policy that prevents seeded, mocked, or fabricated financial values and exposes source timestamps in the interface.
+- [x] Add a supported live-data integration for quotes, OHLCV history, company fundamentals, corporate actions, news, and earnings events.
+- [x] Model and migrate user-owned portfolios, portfolio transactions, watchlist instruments, and AI analysis records in the database.
+- [x] Implement server-side market data normalization, technical indicators, historical return calculations, and short-lived data caching.
+- [x] Implement real-fundamentals company scoring based on income statement, balance sheet, and cash-flow metrics with metric provenance.
+- [x] Implement prediction responses for 1d, 7d, 30d, and 90d horizons that disclose method, data timestamp, confidence, risk, and limitations.
+- [x] Implement LLM-powered recommendation and chat procedures that pass retrieved price, fundamentals, and news context to the model server-side.
+- [x] Implement portfolio holding creation and deletion with buy price, quantity, purchase date, current value, profit/loss, annualized return, and tax-estimate calculations.
+- [x] Implement a portfolio dashboard with total valuation, daily gain/loss, risk score, upcoming earnings, latest news highlights, and a multi-asset smart watchlist.
+- [x] Implement a stock prediction dashboard with selectable 1d, 7d, 30d, and 90d forecast charts plus return, risk, probability-of-gain, and confidence measures.
+- [x] Implement a stock screener with P/E, ROE, dividend yield, market cap, revenue growth, debt, promoter-holding availability, and AI-score filters.
+- [x] Implement a news intelligence feed that groups financial news, summarizes it, assigns only Positive, Negative, or Neutral sentiment, and presents market-impact context.
+- [ ] Implement a mutual-fund explorer with real fund data and comparisons for expense ratio, rolling returns, sector allocation, and Sharpe, Sortino, Alpha, Beta, and Max Drawdown metrics.
+- [x] Replace the mutual-fund explorer’s non-returning default ticker with a provider-verified fund-history symbol and revalidate real price/risk calculations.
+- [x] Apply the white-grid mathematical-blueprint visual system: oversized black typography, monospaced labels, technical formula motifs, and pastel cyan/pink wireframes.
+- [x] Add responsive navigation, accessible states, data-source attribution, and a prominent research-only / not-investment-advice notice.
+- [x] Add and run Vitest coverage for calculations, sentiment validation, fundamental-score inputs, and server-side data/LLM contracts.
+- [ ] Verify desktop and mobile interface screenshots, resolve console/build errors, and complete all pending TODO items before the project checkpoint.
+- [x] Resolve the browser console’s React list-key warning in the command-center rendering path and revalidate diagnostics.
+- [x] Prevent screener live rows with a missing provider currency from passing an invalid currency code to number formatting, then revalidate the route.
+- [x] Implement provider-backed dividend and stock-split retrieval with source, retrieval timestamp, and typed server procedure coverage.
+- [x] Add automated tests and live-source verification coverage for normalized corporate-actions data.
+- [x] Add user-scoped AI analysis records with request context, data timestamp, response text, and retention-ready database helpers.
+- [x] Add explicit prediction-method metadata to the structured AI recommendation result and render it in every 1d, 7d, 30d, and 90d research response.
+- [x] Add concrete server/UI or automated verification that the command center presents each required real-data dashboard component together.
+- [x] Integrate a live mutual-fund source for expense ratio and sector allocation, or retain an explicit product limitation pending a licensed source rather than inventing values.
+- [x] Add accessible loading, empty, error, and focus-state verification for finance workflows and confirm research-only notices on all finance/AI surfaces.
+- [x] Capture clean browser diagnostics after the list-key and currency-format fixes.
+- [x] Add deterministic client-side checks for loading, empty, error, and keyboard/focus states on finance and AI routes, including research-only notice coverage.
+- [x] After a clean restart, record timestamp-scoped browser-console and network diagnostics with no current errors or warnings across the command center, portfolio, prediction, AI, screener, news, and fund routes.
+- [x] Add automated source-transparency coverage and an explicit data-limitations record proving unavailable fund expense/allocation fields are disclosed instead of estimated.
+- [x] Add direct deterministic coverage for the full real mutual-fund metric set currently supported by the product: rolling returns, Sharpe, Sortino, Alpha, Beta, and Max Drawdown.
+- [x] Implement the current MVP mutual-fund explorer with live price/history, calculated rolling returns and risk metrics, and explicit unavailable-field disclosures for provider-missing expense ratio and sector allocation.
+- [x] Align the live-source verification script’s mutual-fund symbol with the VFIAX default used by the explorer.
+- [x] Run final live-source checks for quotes, history, fundamentals, corporate actions, news, earnings, and VFIAX fund history; run all automated tests and TypeScript checks.

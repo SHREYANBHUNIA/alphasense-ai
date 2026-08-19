@@ -1,6 +1,7 @@
 import { eq } from "drizzle-orm";
+import { and, asc, desc } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users } from "../drizzle/schema";
+import { aiAnalysisRecords, InsertUser, portfolioTransactions, portfolios, users, watchlistItems } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -89,4 +90,115 @@ export async function getUserByOpenId(openId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
-// TODO: add feature queries here as your schema grows.
+export async function getOrCreateDefaultPortfolio(userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("The database is not available.");
+  const existing = await db.select().from(portfolios).where(eq(portfolios.userId, userId)).orderBy(asc(portfolios.id)).limit(1);
+  if (existing[0]) return existing[0];
+
+  await db.insert(portfolios).values({ userId, name: "Primary Portfolio", baseCurrency: "USD" });
+  const created = await db.select().from(portfolios).where(and(eq(portfolios.userId, userId), eq(portfolios.name, "Primary Portfolio"))).limit(1);
+  if (!created[0]) throw new Error("Could not create a portfolio.");
+  return created[0];
+}
+
+export async function listUserTransactions(userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("The database is not available.");
+  return db
+    .select({ transaction: portfolioTransactions, portfolio: portfolios })
+    .from(portfolioTransactions)
+    .innerJoin(portfolios, eq(portfolioTransactions.portfolioId, portfolios.id))
+    .where(eq(portfolios.userId, userId))
+    .orderBy(asc(portfolioTransactions.transactionDate), asc(portfolioTransactions.id));
+}
+
+export async function createPortfolioTransaction(input: {
+  userId: number;
+  symbol: string;
+  assetName?: string | null;
+  assetType: "stock" | "etf" | "mutual_fund";
+  side: "buy" | "sell";
+  quantity: string;
+  price: string;
+  transactionDate: Date;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("The database is not available.");
+  const portfolio = await getOrCreateDefaultPortfolio(input.userId);
+  await db.insert(portfolioTransactions).values({
+    portfolioId: portfolio.id,
+    symbol: input.symbol,
+    assetName: input.assetName ?? null,
+    assetType: input.assetType,
+    side: input.side,
+    quantity: input.quantity,
+    price: input.price,
+    transactionDate: input.transactionDate,
+  });
+}
+
+export async function deletePortfolioTransaction(userId: number, transactionId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("The database is not available.");
+  const owned = await db
+    .select({ id: portfolioTransactions.id })
+    .from(portfolioTransactions)
+    .innerJoin(portfolios, eq(portfolioTransactions.portfolioId, portfolios.id))
+    .where(and(eq(portfolios.userId, userId), eq(portfolioTransactions.id, transactionId)))
+    .limit(1);
+  if (!owned[0]) throw new Error("Transaction not found.");
+  await db.delete(portfolioTransactions).where(eq(portfolioTransactions.id, transactionId));
+}
+
+export async function listWatchlistItems(userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("The database is not available.");
+  return db.select().from(watchlistItems).where(eq(watchlistItems.userId, userId)).orderBy(asc(watchlistItems.symbol));
+}
+
+export async function upsertWatchlistItem(input: {
+  userId: number;
+  symbol: string;
+  assetName?: string | null;
+  assetType: "stock" | "etf" | "mutual_fund";
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("The database is not available.");
+  await db
+    .insert(watchlistItems)
+    .values({ userId: input.userId, symbol: input.symbol, assetName: input.assetName ?? null, assetType: input.assetType })
+    .onDuplicateKeyUpdate({ set: { assetName: input.assetName ?? null, assetType: input.assetType } });
+}
+
+export async function deleteWatchlistItem(userId: number, itemId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("The database is not available.");
+  await db.delete(watchlistItems).where(and(eq(watchlistItems.id, itemId), eq(watchlistItems.userId, userId)));
+}
+
+export async function createAIAnalysisRecord(input: {
+  userId: number;
+  analysisType: "recommendation" | "news" | "chat";
+  symbol?: string | null;
+  requestContext: string;
+  responseText: string;
+  dataAsOf?: Date | null;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("The database is not available.");
+  await db.insert(aiAnalysisRecords).values({
+    userId: input.userId,
+    analysisType: input.analysisType,
+    symbol: input.symbol ?? null,
+    requestContext: input.requestContext,
+    responseText: input.responseText,
+    dataAsOf: input.dataAsOf ?? null,
+  });
+}
+
+export async function listRecentAIAnalysisRecords(userId: number, limit = 20) {
+  const db = await getDb();
+  if (!db) throw new Error("The database is not available.");
+  return db.select().from(aiAnalysisRecords).where(eq(aiAnalysisRecords.userId, userId)).orderBy(desc(aiAnalysisRecords.createdAt)).limit(limit);
+}

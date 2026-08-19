@@ -1,0 +1,21 @@
+import { useAuth } from "@/_core/hooks/useAuth";
+import { startLogin } from "@/const";
+import { AIChatBox, type Message } from "@/components/AIChatBox";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { trpc } from "@/lib/trpc";
+import { useState } from "react";
+import { toast } from "sonner";
+
+function formatBrief(result: { symbol: string; stance: string; probabilityOfGainPercent: number; confidencePercent: number; riskLevel: string; summary: string; bullCase: string; bearCase: string; risks: string[]; limitations: string[]; predictionMethod: string; asOf: string }) {
+  return `## ${result.symbol} research brief\n\n**Research stance:** ${result.stance.toUpperCase()} · **Probability of gain:** ${result.probabilityOfGainPercent.toFixed(0)}% · **Confidence:** ${result.confidencePercent.toFixed(0)}% · **Risk:** ${result.riskLevel}\n\n${result.summary}\n\n### Method\n${result.predictionMethod}\n\n### Bull case\n${result.bullCase}\n\n### Bear case\n${result.bearCase}\n\n### Key risks\n${result.risks.map(risk => `- ${risk}`).join("\n")}\n\n### Limits\n${result.limitations.map(limit => `- ${limit}`).join("\n")}\n\n_Data as of ${new Date(result.asOf).toLocaleString()}. This is data-grounded research, not personalized investment advice._`;
+}
+
+export default function AIAnalyst() {
+  const { user } = useAuth(); const [symbol, setSymbol] = useState("AAPL"); const [messages, setMessages] = useState<Message[]>([]);
+  const analysis = trpc.ai.recommendation.useMutation({ onSuccess: result => setMessages(current => [...current, { role: "assistant", content: formatBrief(result) }]), onError: error => toast.error(error.message) });
+  const send = (question: string) => { const ticker = symbol.trim().toUpperCase(); if (!/^[A-Z0-9.^=-]{1,20}$/.test(ticker)) return toast.error("Use a valid market ticker."); setMessages(current => [...current, { role: "user", content: question }]); analysis.mutate({ symbol: ticker, question }); };
+  if (!user) return <div className="mx-auto max-w-3xl py-16 text-center"><p className="technical-label">Context-grounded LLM research</p><h1 className="mt-3 text-5xl font-black tracking-[-0.08em]">AI<br /><span className="text-cyan-700">ANALYST.</span></h1><p className="mx-auto mt-5 max-w-xl text-sm leading-6 text-muted-foreground">Sign in to use the private, persistent AI research workspace. Each response is assembled on the server from newly retrieved prices, historical data, reported fundamentals, and source headlines.</p><Button className="mt-7" onClick={() => startLogin()}>Sign in to start research</Button></div>;
+  return <div className="mx-auto max-w-6xl space-y-5 pb-10"><header className="border-b border-cyan-900/20 pb-5"><p className="technical-label">Private LLM workspace / server-side context retrieval</p><h1 className="mt-2 text-5xl font-black tracking-[-0.08em]">AI<br /><span className="text-cyan-700">ANALYST.</span></h1></header><div className="grid gap-5 xl:grid-cols-[0.65fr_1.35fr]"><aside className="blueprint-card h-fit p-5"><Label className="technical-label">Current context ticker</Label><Input className="mt-2 font-mono" value={symbol} onChange={event => setSymbol(event.target.value.toUpperCase())} /><p className="mt-5 text-sm font-semibold">Evidence supplied to the model</p><ul className="mt-2 space-y-2 text-xs leading-5 text-muted-foreground"><li>• Live quote and provider timestamp</li><li>• 1-year OHLCV-derived returns, volatility, drawdown, and indicators</li><li>• Reported income, balance-sheet, and cash-flow fields</li><li>• Latest provider-sourced headline metadata</li></ul><p className="mt-5 border-l-2 border-pink-300 pl-3 text-xs leading-5 text-muted-foreground">LLM research can be incomplete or wrong. The app displays limitations and sources, and does not provide personalized financial or tax advice.</p></aside><AIChatBox className="blueprint-card" height="650px" messages={messages} onSendMessage={send} isLoading={analysis.isPending} emptyStateMessage="Ask an evidence-limited market research question" placeholder="Ask about risks, evidence, or a comparison…" suggestedPrompts={[`Should I buy ${symbol}?`, `What are the key risks for ${symbol}?`, `Summarize the bull and bear case for ${symbol}.`]} /></div></div>;
+}
